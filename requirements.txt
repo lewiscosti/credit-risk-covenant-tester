@@ -1,0 +1,9 @@
+streamlit
+pydantic
+openai
+PyMuPDF
+pandas
+numpy
+scipy
+reportlab
+matplotlib
