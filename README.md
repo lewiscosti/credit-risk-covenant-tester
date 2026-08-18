@@ -2,7 +2,7 @@ Here is a comprehensive `README.md` for your GitHub repository.
 
 ---
 
-```markdown
+```
 # Automated Credit Risk Analyzer & Debt Covenant Stress-Tester
 
 A privacy-first credit risk assessment and debt covenant stress-testing platform. Designed for institutional due diligence
