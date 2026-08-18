@@ -5,7 +5,7 @@ Here is a comprehensive `README.md` for your GitHub repository.
 ```markdown
 # Automated Credit Risk Analyzer & Debt Covenant Stress-Tester
 
-An enterprise-grade, privacy-first credit risk assessment and debt covenant stress-testing platform. Designed for institutional due diligence under confidential conditions, this tool combines **on-premise quantitative extraction** with **structural credit risk models** and **Monte Carlo cash flow simulations**—delivering bank-ready credit memoranda without transmitting sensitive borrower data to external APIs.
+A privacy-first credit risk assessment and debt covenant stress-testing platform. Designed for institutional due diligence under confidential conditions, this tool combines **on-premise quantitative extraction** with **structural credit risk models** and **Monte Carlo cash flow simulations**—delivering bank-ready credit memoranda without transmitting sensitive borrower data to external APIs.
 
 ---
 
