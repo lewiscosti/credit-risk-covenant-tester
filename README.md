@@ -5,21 +5,31 @@ Here is a comprehensive `README.md` for your GitHub repository.
 ```markdown
 # Automated Credit Risk Analyzer & Debt Covenant Stress-Tester
 
-A privacy-first credit risk assessment and debt covenant stress-testing platform. Designed for institutional due diligence under confidential conditions, this tool combines **on-premise quantitative extraction** with **structural credit risk models** and **Monte Carlo cash flow simulations**—delivering bank-ready credit memoranda without transmitting sensitive borrower data to external APIs.
+A privacy-first credit risk assessment and debt covenant stress-testing platform. Designed for institutional due diligence
+under confidential conditions, this tool combines **on-premise quantitative extraction** with **structural credit risk models**
+and **Monte Carlo cash flow simulations**—delivering bank-ready credit memoranda without transmitting sensitive borrower data
+to external APIs.
 
 ---
 
 ## Technical Overview
 
-Modern credit risk due diligence requires evaluating both **accounting insolvency risk** and **market-implied default risk**, while stress-testing balance sheets against macroeconomic shocks (e.g., EBITDA contractions and interest rate hikes).
+Modern credit risk due diligence requires evaluating both **accounting insolvency risk** and **market-implied default risk**,
+while stress-testing balance sheets against macroeconomic shocks (e.g., EBITDA contractions and interest rate hikes).
 
 This platform unifies three core credit analysis paradigms:
 
-1. **On-Premise LLM Document Parsing:** Converts raw financial PDFs, credit agreements, and audited annual reports into structured `Pydantic` schemas using local open-weight models (via Ollama). PDF processing includes automatic fallback to PyMuPDF OCR for scanned documents.
+1. **On-Premise LLM Document Parsing:** Converts raw financial PDFs, credit agreements, and audited annual reports into structured
+`Pydantic` schemas using local open-weight models (via Ollama). PDF processing includes automatic fallback to PyMuPDF OCR for
+ scanned documents.
 2. **Structural & Statistical Credit Models:**
-   * **Altman Z-Score & Z''-Score:** Measures short-to-medium term bankruptcy risk across manufacturing and non-manufacturing/private entities using multivariate balance sheet ratios.
-   * **Merton Structural Default Model:** Solves a set of simultaneous non-linear equations using `scipy.optimize.root` to back out unobservable firm asset values ($\text{V}_A$) and asset volatility ($\sigma_A$) from equity market capitalization ($\text{E}$) and equity volatility ($\sigma_E$). Calculates distance-to-default ($\text{DD}$) and 1-year probability of default ($\text{PD}$).
-3. **Monte Carlo Covenant Stress Simulation:** Runs 5,000 log-normal EBITDA path simulations to evaluate covenant breach probabilities (Leverage and Interest Coverage ratios) under user-defined macroeconomic shocks.
+   * **Altman Z-Score & Z''-Score:** Measures short-to-medium term bankruptcy risk across manufacturing and non-manufacturing/private
+  entities using multivariate balance sheet ratios.
+   * **Merton Structural Default Model:** Solves a set of simultaneous non-linear equations using `scipy.optimize.root` to back out
+  unobservable firm asset values ($\text{V}_A$) and asset volatility ($\sigma_A$) from equity market capitalization ($\text{E}$) and
+  equity volatility ($\sigma_E$). Calculates distance-to-default ($\text{DD}$) and 1-year probability of default ($\text{PD}$).
+3. **Monte Carlo Covenant Stress Simulation:** Runs 5,000 log-normal EBITDA path simulations to evaluate covenant breach probabilities
+  (Leverage and Interest Coverage ratios) under user-defined macroeconomic shocks.
 
 ---
 
@@ -87,10 +97,14 @@ v  [4. Aggregate Financial Metrics]
 
 ## Key Features
 
-* **Strict Privacy & Zero Data Leakage:** Fully compatible with local Ollama deployment—ideal for confidential due diligence, M&A, and banking environments.
-* **Smart PDF & OCR Parsing:** Intelligent keyword filtering targets relevant pages (Balance Sheets, Debt Schedules) to minimize LLM token usage while executing OCR on scanned pages when necessary.
-* **Dynamic Macro Stress Controls:** Interactively adjust EBITDA downside haircuts ($0\% - 50\%$) and interest rate hikes ($0 - 500 \text{ bps}$) to observe real-time impact on covenant breach probabilities.
-* **Institutional Credit Memo Generator:** Produces a downloadable, 2-page PDF Credit Memorandum complete with executive recommendations, metric breakdown tables, and sensitivity matrices.
+* **Strict Privacy & Zero Data Leakage:** Fully compatible with local Ollama deployment—ideal for confidential due diligence, M&A,
+    and banking environments.
+* **Smart PDF & OCR Parsing:** Intelligent keyword filtering targets relevant pages (Balance Sheets, Debt Schedules) to minimize LLM
+    token usage while executing OCR on scanned pages when necessary.
+* **Dynamic Macro Stress Controls:** Interactively adjust EBITDA downside haircuts ($0\% - 50\%$) and interest rate hikes
+    ($0 - 500 \text{ bps}$) to observe real-time impact on covenant breach probabilities.
+* **Institutional Credit Memo Generator:** Produces a downloadable, 2-page PDF Credit Memorandum complete with executive recommendations,
+     metric breakdown tables, and sensitivity matrices.
 
 ---
 
