@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, TypedDict
 
 from reportlab.lib import colors
@@ -30,12 +30,7 @@ class StressResults(TypedDict, total=False):
 
 
 def _escape(text: str) -> str:
-    return (
-        str(text)
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _cell(text: str, style: ParagraphStyle) -> Paragraph:
@@ -163,7 +158,7 @@ def _table_style_grid() -> TableStyle:
 def _recommendation_badge(
     z_results: dict[str, Any],
     stress_results: StressResults | dict[str, Any],
-) -> tuple[Paragraph, str]:
+) -> tuple[str, str]:
     scenarios = stress_results.get("scenarios", [])
     base_breach = scenarios[0]["breach_probability_pct"] if scenarios else 100.0
     zone = z_results.get("z_score_zone", "Grey")
@@ -215,7 +210,7 @@ def generate_credit_memo(
         bottomMargin=PAGE_MARGIN,
     )
 
-    today = datetime.now().strftime("%B %d, %Y")
+    today = datetime.now(tz=timezone.utc).strftime("%B %d, %Y")
     net_debt_ebitda = inputs.net_debt / inputs.ebitda if inputs.ebitda else 0.0
     risk_rating = z_results.get("z_score_rating", "N/A")
     badge_label, badge_style_key = _recommendation_badge(z_results, stress_results)
@@ -254,11 +249,16 @@ def generate_credit_memo(
         ],
         [
             _cell("Merton Distance-to-Default", styles["table_cell"]),
-            _cell(f"{merton_results['distance_to_default']:.2f}σ", styles["table_cell"]),
+            _cell(
+                f"{merton_results['distance_to_default']:.2f}σ", styles["table_cell"]
+            ),
         ],
         [
             _cell("Probability of Default (1Y)", styles["table_cell"]),
-            _cell(f"{merton_results['probability_of_default_pct']:.2f}%", styles["table_cell"]),
+            _cell(
+                f"{merton_results['probability_of_default_pct']:.2f}%",
+                styles["table_cell"],
+            ),
         ],
         [
             _cell("Net Debt / EBITDA", styles["table_cell"]),
@@ -282,7 +282,9 @@ def generate_credit_memo(
                 _cell(scenario["label"], styles["table_cell"]),
                 _cell(f"{scenario['net_debt_ebitda']:.2f}x", styles["table_cell"]),
                 _cell(f"{scenario['interest_coverage']:.2f}x", styles["table_cell"]),
-                _cell(f"{scenario['breach_probability_pct']:.1f}%", styles["table_cell"]),
+                _cell(
+                    f"{scenario['breach_probability_pct']:.1f}%", styles["table_cell"]
+                ),
             ]
         )
     stress_col = CONTENT_WIDTH / 4
@@ -299,18 +301,29 @@ def generate_credit_memo(
         Spacer(1, 8),
         header_table,
         Spacer(1, 10),
-        Paragraph("Section 1 — Executive Summary &amp; Recommendation", styles["section_header"]),
+        Paragraph(
+            "Section 1 — Executive Summary &amp; Recommendation",
+            styles["section_header"],
+        ),
         badge,
         Spacer(1, 6),
         Paragraph(_escape(summary_text), styles["body_dark"]),
         Spacer(1, 10),
-        Paragraph("Section 2 — Balance Sheet &amp; Structural Credit Metrics", styles["section_header"]),
+        Paragraph(
+            "Section 2 — Balance Sheet &amp; Structural Credit Metrics",
+            styles["section_header"],
+        ),
         metrics_table,
         Spacer(1, 10),
-        Paragraph("Section 3 — Covenant Stress-Test Sensitivity Matrix", styles["section_header"]),
+        Paragraph(
+            "Section 3 — Covenant Stress-Test Sensitivity Matrix",
+            styles["section_header"],
+        ),
         stress_table,
         Spacer(1, 10),
-        Paragraph("Section 4 — Key Risk Disclosures &amp; Footnotes", styles["section_header"]),
+        Paragraph(
+            "Section 4 — Key Risk Disclosures &amp; Footnotes", styles["section_header"]
+        ),
         *footnote_flowables,
         Spacer(1, 8),
         Paragraph(

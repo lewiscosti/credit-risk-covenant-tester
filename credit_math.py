@@ -152,7 +152,11 @@ def calculate_merton_pd(
         nd1 = norm.cdf(d1)
         nd2 = norm.cdf(d2)
 
-        eq1 = v_a * nd1 - total_debt * math.exp(-risk_free_rate * time_horizon) * nd2 - equity_value
+        eq1 = (
+            v_a * nd1
+            - total_debt * math.exp(-risk_free_rate * time_horizon) * nd2
+            - equity_value
+        )
         eq2 = sigma_a * v_a * nd1 - equity_volatility * equity_value
         return np.array([eq1, eq2])
 

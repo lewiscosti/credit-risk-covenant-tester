@@ -4,18 +4,26 @@ from __future__ import annotations
 
 import io
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
+from openai import OpenAIError
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
-from credit_math import calculate_altman_z, calculate_merton_pd, run_cashflow_simulation
+from credit_math import (
+    AltmanZResult,
+    CashflowSimResult,
+    MertonPDResult,
+    calculate_altman_z,
+    calculate_merton_pd,
+    run_cashflow_simulation,
+)
 from document_parser import FinancialInputs, parse_credit_document
 
 DEFAULT_EQUITY_VOLATILITY = 0.35
@@ -49,7 +57,9 @@ def _simulate_ebitda_paths(
 ) -> np.ndarray:
     rng = np.random.default_rng(random_seed)
     shocks = rng.standard_normal(num_simulations)
-    return base_ebitda * np.exp(-0.5 * ebitda_volatility**2 + ebitda_volatility * shocks)
+    return base_ebitda * np.exp(
+        -0.5 * ebitda_volatility**2 + ebitda_volatility * shocks
+    )
 
 
 def _stressed_interest(base_interest: float, rate_hike_bps: int) -> float:
@@ -58,28 +68,33 @@ def _stressed_interest(base_interest: float, rate_hike_bps: int) -> float:
 
 def _build_credit_memo_text(
     data: FinancialInputs,
-    altman: dict,
-    merton: dict,
-    base_sim: dict,
-    stressed_sim: dict,
+    altman: AltmanZResult,
+    merton: MertonPDResult,
+    base_sim: CashflowSimResult,
+    stressed_sim: CashflowSimResult,
     haircut_pct: int,
     rate_hike_bps: int,
 ) -> str:
     leverage = data.net_debt / data.ebitda if data.ebitda else float("inf")
     return f"""CREDIT MEMORANDUM — {data.company_name.upper()}
 Period Ending: {data.period_ending}
-Generated: {datetime.now().strftime("%Y-%m-%d %H:%M")}
+Generated: {datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M")}
 
 EXECUTIVE SUMMARY
-{data.company_name} presents a {altman['z_score_zone']} credit profile based on an Altman Z-Score
-of {altman['z_score']:.2f} ({altman['z_score_rating']}). Structural default risk per the Merton
-model implies a {merton['probability_of_default_pct']:.2f}% probability of default over a
-one-year horizon (Distance-to-Default: {merton['distance_to_default']:.2f}σ).
+{data.company_name} presents a {
+        altman["z_score_zone"]
+    } credit profile based on an Altman Z-Score
+of {altman["z_score"]:.2f} ({
+        altman["z_score_rating"]
+    }). Structural default risk per the Merton
+model implies a {
+        merton["probability_of_default_pct"]:.2f}% probability of default over a
+one-year horizon (Distance-to-Default: {merton["distance_to_default"]:.2f}σ).
 
 KEY METRICS
-  Altman Z-Score:          {altman['z_score']:.2f}  [{altman['z_score_zone']}]
-  Merton Distance-to-Def:  {merton['distance_to_default']:.2f}
-  Merton PD (1Y):          {merton['probability_of_default_pct']:.2f}%
+  Altman Z-Score:          {altman["z_score"]:.2f}  [{altman["z_score_zone"]}]
+  Merton Distance-to-Def:  {merton["distance_to_default"]:.2f}
+  Merton PD (1Y):          {merton["probability_of_default_pct"]:.2f}%
   Net Debt / EBITDA:       {leverage:.2f}x
   Net Debt:                {data.net_debt:,.0f}
   EBITDA:                  {data.ebitda:,.0f}
@@ -87,20 +102,23 @@ KEY METRICS
 COVENANT STRESS TEST
 Macro assumptions — EBITDA haircut: {haircut_pct}%; rate hike: +{rate_hike_bps} bps.
 
-  Base Case Breach Probability:     {base_sim['probability_of_breach_pct']:.1f}%
-    Leverage breaches:              {base_sim['leverage_breach_pct']:.1f}%
-    Coverage breaches:              {base_sim['coverage_breach_pct']:.1f}%
+  Base Case Breach Probability:     {base_sim["probability_of_breach_pct"]:.1f}%
+    Leverage breaches:              {base_sim["leverage_breach_pct"]:.1f}%
+    Coverage breaches:              {base_sim["coverage_breach_pct"]:.1f}%
 
-  Stressed Case Breach Probability: {stressed_sim['probability_of_breach_pct']:.1f}%
-    Leverage breaches:              {stressed_sim['leverage_breach_pct']:.1f}%
-    Coverage breaches:              {stressed_sim['coverage_breach_pct']:.1f}%
+  Stressed Case Breach Probability: {stressed_sim["probability_of_breach_pct"]:.1f}%
+    Leverage breaches:              {stressed_sim["leverage_breach_pct"]:.1f}%
+    Coverage breaches:              {stressed_sim["coverage_breach_pct"]:.1f}%
 
 RECOMMENDATION
-{"Maintain exposure with standard monitoring." 
-    if stressed_sim['probability_of_breach_pct'] < 15 and altman['z_score_zone'] != "Distress"
-    else "Enhanced monitoring recommended — structural accounting distress or elevated covenant risk."
-    if stressed_sim['probability_of_breach_pct'] < 35
-    else "Consider risk mitigation — material deterioration under macro stress scenario."}
+{
+        "Maintain exposure with standard monitoring."
+        if stressed_sim["probability_of_breach_pct"] < 15
+        and altman["z_score_zone"] != "Distress"
+        else "Enhanced monitoring recommended — structural accounting distress or elevated covenant risk."
+        if stressed_sim["probability_of_breach_pct"] < 35
+        else "Consider risk mitigation — material deterioration under macro stress scenario."
+    }
 
 Extracted Covenants: {len(data.extracted_covenants)} identified in source document.
 """
@@ -116,7 +134,9 @@ def _build_credit_memo_pdf(memo_text: str, company_name: str) -> bytes:
     ]
     for line in memo_text.split("\n"):
         if line.strip():
-            story.append(Paragraph(line.replace("  ", "&nbsp;&nbsp;"), styles["Normal"]))
+            story.append(
+                Paragraph(line.replace("  ", "&nbsp;&nbsp;"), styles["Normal"])
+            )
         else:
             story.append(Spacer(1, 6))
     doc.build(story)
@@ -176,10 +196,8 @@ def main() -> None:
                 status.update(
                     label="Analysis Complete!", state="complete", expanded=False
                 )
-            except Exception as e:
-                status.update(
-                    label="Extraction Failed!", state="error", expanded=True
-                )
+            except (FileNotFoundError, ValueError, RuntimeError, OpenAIError) as e:
+                status.update(label="Extraction Failed!", state="error", expanded=True)
                 st.error(f"Error parsing credit document: {e}")
                 return
             finally:
@@ -192,18 +210,26 @@ def main() -> None:
     data: FinancialInputs = st.session_state["financial_inputs"]
     max_leverage, min_coverage = _parse_covenant_thresholds(data.extracted_covenants)
 
-    # Sanitize total_assets to handle OCR gaps in scanned PDFs
-    total_assets = data.total_assets
-    if total_assets <= 0:
-        st.warning(
-            "⚠️ **OCR Extraction Warning:** `total_assets` was extracted as `0.0`. "
-            "Estimating total assets from total liabilities and equity to calculate Altman Z-Score."
-        )
-        total_assets = max(data.total_liabilities + data.market_cap_or_equity, 1.0)
+    # Sanitize extracted values — resolve None/non-positive using accounting identities
+    sanitize_warnings = data.sanitize()
+    if sanitize_warnings:
+        for w in sanitize_warnings:
+            st.warning(f"⚠️ **OCR Extraction Warning:** {w}")
+
+    # After sanitization, all fields are guaranteed to be concrete floats
+    assert data.total_assets is not None
+    assert data.total_liabilities is not None
+    assert data.working_capital is not None
+    assert data.retained_earnings is not None
+    assert data.ebit is not None
+    assert data.market_cap_or_equity is not None
+    assert data.sales is not None
+    assert data.ebitda is not None
+    assert data.interest_expense is not None
 
     altman = calculate_altman_z(
         working_capital=data.working_capital,
-        total_assets=total_assets,
+        total_assets=data.total_assets,
         retained_earnings=data.retained_earnings,
         ebit=data.ebit,
         market_cap=data.market_cap_or_equity,
@@ -248,14 +274,20 @@ def main() -> None:
     )
 
     tab_overview, tab_stress, tab_memo = st.tabs(
-        ["Credit Risk Overview", "Covenant Stress Testing", "Credit Memo Preview & Download"]
+        [
+            "Credit Risk Overview",
+            "Covenant Stress Testing",
+            "Credit Memo Preview & Download",
+        ]
     )
 
     with tab_overview:
         st.subheader(f"{data.company_name} — {data.period_ending}")
         c1, c2, c3, c4 = st.columns(4)
         with c1:
-            _metric_card("Altman Z-Score", f"{altman['z_score']:.2f}", altman["z_score_zone"])
+            _metric_card(
+                "Altman Z-Score", f"{altman['z_score']:.2f}", altman["z_score_zone"]
+            )
         with c2:
             _metric_card("Merton DD", f"{merton['distance_to_default']:.2f}σ")
         with c3:
@@ -268,10 +300,13 @@ def main() -> None:
         with st.expander("Altman Components"):
             st.dataframe(
                 pd.DataFrame(
-                    [{"Component": k, "Value": f"{v:.4f}"} for k, v in altman["components"].items()]
+                    [
+                        {"Component": k, "Value": f"{v:.4f}"}
+                        for k, v in altman["components"].items()
+                    ]
                 ),
                 hide_index=True,
-                width='stretch',
+                width="stretch",
             )
 
     with tab_stress:
@@ -352,14 +387,14 @@ def main() -> None:
                 ],
             }
         )
-        st.dataframe(breach_df, hide_index=True, width='stretch')
+        st.dataframe(breach_df, hide_index=True, width="stretch")
 
         if data.extracted_covenants:
             st.caption("Extracted covenant thresholds")
             st.dataframe(
                 pd.DataFrame([c.model_dump() for c in data.extracted_covenants]),
                 hide_index=True,
-                width='stretch',
+                width="stretch",
             )
 
     with tab_memo:
