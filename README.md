@@ -36,63 +36,34 @@ This platform unifies three core credit analysis paradigms:
 ## Architecture Diagram
 
 
+```mermaid
+flowchart TD
+    classDef layer fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
+    classDef sublayer fill:#313244,stroke:#cba6f7,stroke-width:1px,color:#cdd6f4;
+
+    UI["<b>1. USER INTERFACE</b><br/>Streamlit Web Dashboard (<code>app.py</code>)"]:::layer
+    
+    DOC["<b>2. DOCUMENT EXTRACTION LAYER</b><br/>(<code>document_parser.py</code> / PyMuPDF)<br/>• Keyword Filtering (Balance Sheet, Income Statement, Covenants)<br/>• Text Extraction & OCR Engine (<code>page.get_textpage_ocr</code>)"]:::layer
+    
+    LLM["<b>3. LOCAL INFERENCE ENGINE</b><br/>Ollama / Qwen (OpenAI API Spec)<br/>• On-Premise / Zero Data Leakage<br/>• Structured JSON Schema Extraction (<code>FinancialInputs</code>)"]:::layer
+
+    subgraph MATH ["4. PYTHON MATH ENGINE (credit_math.py)"]
+        direction TB
+        Z["<b>Altman Z-Score Model</b><br/>• Working Capital / TA<br/>• EBIT / Total Assets<br/>• Equity / Liabilities"]:::sublayer
+        M["<b>Merton Model Solver</b><br/>• Solves V_a & Sigma_a<br/>• Distance-to-Default<br/>• 1Y Default Prob (%)"]:::sublayer
+        MC["<b>Monte Carlo Simulation Engine</b><br/>• 5,000 Log-Normal EBITDA Stochastic Trajectories<br/>• Dynamic Rate Hike & EBITDA Haircut Stressing<br/>• Leverage & Coverage Covenant Breach Rates (%)"]:::sublayer
+        
+        Z --> MC
+        M --> MC
+    end
+
+    REP["<b>5. REPORT GENERATOR ENGINE</b><br/>(<code>pdf_generator.py</code> / ReportLab)<br/>• Formats Executive Credit Recommendation Memo (Approved / Declined)<br/>• Generates Downloadable Institutional PDF"]:::layer
+
+    UI -->|"Upload Financial PDF"| DOC
+    DOC -->|"Transmit Extracted Context"| LLM
+    LLM -->|"Parsed Structured Inputs"| MATH
+    MATH -->|"Aggregate Financial Metrics"| REP
 ```
-
-+-----------------------------------------------------------------------------------+
-|                                  USER INTERFACE                                   |
-|                        Streamlit Web Dashboard (app.py)                          |
-+-----------------------------------------------------------------------------------+
-|
-v  [1. Upload Financial PDF]
-+-----------------------------------------------------------------------------------+
-|                             DOCUMENT EXTRACTION LAYER                             |
-|                        (document_parser.py / PyMuPDF)                            |
-|                                                                                   |
-|  * Keyword Filter (Balance Sheet, Income Statement, Covenants)                    |
-|  * Text Extraction & OCR Engine (page.get_textpage_ocr)                           |
-+-----------------------------------------------------------------------------------+
-|
-v  [2. Transmit Extracted Context]
-+-----------------------------------------------------------------------------------+
-|                               LOCAL INFERENCE ENGINE                              |
-|                          Ollama / Qwen (OpenAI API Spec)                          |
-|                                                                                   |
-|  * On-Premise / Zero Data Leakage                                                 |
-|  * Structured JSON Schema Extraction (FinancialInputs)                            |
-+-----------------------------------------------------------------------------------+
-|
-v  [3. Parsed Structured Inputs]
-+-----------------------------------------------------------------------------------+
-|                               PYTHON MATH ENGINE                                  |
-|                               (credit_math.py)                                    |
-|                                                                                   |
-|   +--------------------------+  +--------------------------+                      |
-|   |   Altman Z-Score Model   |  |   Merton Model Solver    |                      |
-|   |  - Working Capital / TA  |  |  - Solves Va & Sigma_a   |                      |
-|   |  - EBIT / Total Assets   |  |  - Distance-to-Default   |                      |
-|   |  - Equity / Liabilities  |  |  - 1Y Default Prob (%)   |                      |
-|   +--------------------------+  +--------------------------+                      |
-|                                         |                                         |
-|                                         v                                         |
-|   +--------------------------------------------------------+                      |
-|   |             Monte Carlo Simulation Engine              |                      |
-|   |  - 5,000 Log-Normal EBITDA Stochastic Trajectories     |                      |
-|   |  - Dynamic Rate Hike & EBITDA Haircut Stressing        |                      |
-|   |  - Leverage & Coverage Covenant Breach Rates (%)       |                      |
-|   +--------------------------------------------------------+                      |
-+-----------------------------------------------------------------------------------+
-|
-v  [4. Aggregate Financial Metrics]
-+-----------------------------------------------------------------------------------+
-|                            REPORT GENERATOR ENGINE                                |
-|                        (pdf_generator.py / ReportLab)                             |
-|                                                                                   |
-|  * Formats Executive Credit Recommendation Memo (Approved / Declined)            |
-|  * Generates Downloadable Institutional PDF                                       |
-+-----------------------------------------------------------------------------------+
-
-```
-
 ---
 
 ## Key Features
