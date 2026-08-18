@@ -2,7 +2,6 @@ Here is a comprehensive `README.md` for your GitHub repository.
 
 ---
 
-```
 # Automated Credit Risk Analyzer & Debt Covenant Stress-Tester
 
 A privacy-first credit risk assessment and debt covenant stress-testing platform. Designed for institutional due diligence
@@ -35,7 +34,6 @@ This platform unifies three core credit analysis paradigms:
 
 ## Architecture Diagram
 
-```
 ```mermaid
 flowchart TD
     classDef layer fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
