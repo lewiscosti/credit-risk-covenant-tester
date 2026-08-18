@@ -35,7 +35,7 @@ This platform unifies three core credit analysis paradigms:
 
 ## Architecture Diagram
 
-
+```
 ```mermaid
 flowchart TD
     classDef layer fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
