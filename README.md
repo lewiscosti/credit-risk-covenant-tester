@@ -53,7 +53,7 @@ flowchart TD
         M --> MC
     end
 
-    REP["<b>5. REPORT GENERATOR ENGINE</b><br/>(<code>pdf_generator.py</code> / ReportLab)<br/>• Formats Executive Credit Recommendation Memo (Approved / Declined)<br/>• Generates Downloadable Institutional PDF"]:::layer
+    REP["<b>5. REPORT GENERATOR ENGINE</b><br/>(<code>memo_generator.py</code> / ReportLab)<br/>• Formats Executive Credit Recommendation Memo (Approved / Declined)<br/>• Generates Downloadable Institutional PDF"]:::layer
 
     UI -->|"Upload Financial PDF"| DOC
     DOC -->|"Transmit Extracted Context"| LLM
@@ -64,7 +64,7 @@ flowchart TD
 
 ## Key Features
 
-* **Strict Privacy & Zero Data Leakage:** Fully compatible with local Ollama deployment—ideal for confidential due diligence, M&A,
+* **Strict Privacy:** Fully compatible with local Ollama deployment—ideal for confidential due diligence, M&A,
     and banking environments.
 * **Smart PDF & OCR Parsing:** Intelligent keyword filtering targets relevant pages (Balance Sheets, Debt Schedules) to minimize LLM
     token usage while executing OCR on scanned pages when necessary.
@@ -77,14 +77,41 @@ flowchart TD
 
 ## Project Structure
 
-```text
-├── app.py               # Streamlit web UI and orchestration logic
-├── credit_math.py       # Core quantitative implementations (Altman, Merton, Monte Carlo)
-├── document_parser.py   # PDF text/OCR extraction and LLM structured parsing
-├── pdf_generator.py     # Institutional Credit Memorandum ReportLab PDF builder
-└── requirements.txt     # System dependencies
+```credit-risk-covenant-tester/
+├── app.py                       # Streamlit web UI and application orchestration
+├── credit_math.py               # Core quantitative models: Altman Z-Score, Merton PD and Monte Carlo covenant stress
+├── document_parser.py           # PDF text/OCR extraction and LLM-based structured financial data parsing
+├── memo_generator.py            # Credit recommendation memorandum generation
+├── requirements.txt             # Python dependencies
+│
+├── tests/
+│   └── test_credit_math.py      # Automated tests for quantitative credit-risk calculations
+│
+├── docs/
+│   └── screenshots/
+│       ├── 01-dashboard.png
+│       ├── 02-document-upload.png
+│       ├── 03-analysis-complete.png
+│       ├── 04-credit-risk-overview.png
+│       ├── 05-monte-carlo.png
+│       └── 06-credit-recommendation.png
+│                                  # Application workflow and output screenshots
+│
+└── .github/
+    └── workflows/
+        └── tests.yml            # GitHub Actions CI workflow for automated testing
 
 ```
+## Testing
+
+The deterministic quantitative engine is covered by an automated `pytest` test suite. Testing is focused on the core credit-risk calculations in `credit_math.py`, which are separated from the document extraction and LLM inference layers.
+
+### Running the tests
+
+From the project root:
+
+```bash
+python -m pytest -v
 
 ---
 
@@ -96,10 +123,10 @@ Ensure [Ollama](https://ollama.com/) is installed and running on your system.
 
 ### 2. Pull Recommended Extraction Model
 
-We recommend running `qwen3.6:27b` (or `qwen2.5:14b` / `qwen2.5:7b` depending on VRAM availability):
+We recommend running `qwen3.8:27b` (or `qwe3.5:9b` / `qwen3.5:4b` depending on VRAM availability):
 
 ```bash
-ollama pull qwen3.6:27b
+ollama pull qwen3.8:27b
 
 ```
 
@@ -111,12 +138,12 @@ You can test that your local Ollama endpoint is responding to OpenAI-compatible 
 curl http://localhost:11434/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen3.6:27b",
+    "model": "qwen3.8:27b",
     "messages": [
       {"role": "system", "content": "You are a financial credit analyst."},
       {"role": "user", "content": "Respond with: API connection successful."}
     ],
-    "temperature": 0.0
+    "temperature": 0.7
   }'
 
 ```
