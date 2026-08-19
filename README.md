@@ -113,6 +113,7 @@ From the project root:
 ```bash
 python -m pytest -v
 
+```
 ---
 
 ## Prerequisites & Local Ollama Setup
@@ -209,7 +210,5 @@ When testing borrower stress limits in the sidebar:
 ## License
 
 Distributed under the MIT License. See `LICENSE` for details.
-
-```
 
 ```
