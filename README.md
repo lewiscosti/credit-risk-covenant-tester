@@ -1,5 +1,3 @@
-Here is a comprehensive `README.md` for your GitHub repository.
-
 ---
 
 # Automated Credit Risk Analyzer & Debt Covenant Stress-Tester
