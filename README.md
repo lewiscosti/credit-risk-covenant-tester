@@ -210,5 +210,3 @@ When testing borrower stress limits in the sidebar:
 ## License
 
 Distributed under the MIT License. See `LICENSE` for details.
-
-```
