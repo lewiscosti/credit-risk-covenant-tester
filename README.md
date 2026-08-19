@@ -68,7 +68,7 @@ flowchart TD
     and banking environments.
 * **Smart PDF & OCR Parsing:** Intelligent keyword filtering targets relevant pages (Balance Sheets, Debt Schedules) to minimize LLM
     token usage while executing OCR on scanned pages when necessary.
-* **Dynamic Macro Stress Controls:** Interactively adjust EBITDA downside haircuts $`(0\% - 50\%)$` and interest rate hikes
+* **Dynamic Macro Stress Controls:** Interactively adjust EBITDA downside haircuts (0% - 50%) and interest rate hikes
     ($0 - 500 \text{ bps}$) to observe real-time impact on covenant breach probabilities.
 * **Institutional Credit Memo Generator:** Produces a downloadable, 2-page PDF Credit Memorandum complete with executive recommendations,
      metric breakdown tables, and sensitivity matrices.
