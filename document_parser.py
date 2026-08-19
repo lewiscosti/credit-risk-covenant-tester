@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
-DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "qwen-3.8-instruct")
+DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "qwen-3.8-instruct:latest")
 
 # Sampling parameters for the extraction call
 EXTRACTION_TEMPERATURE = 0.7
